@@ -5,11 +5,18 @@ import tempfile
 import os
 import signal
 
+# This class is based in Victor Lopez (Github: v-lopez) implementation
+
 
 class ShellCmd:
     """Helpful class to spawn commands and keep track of them"""
 
     def __init__(self, cmd):
+        """Spawn a command in a shell and keep track of it so
+        we can recover the stdout and stderr and also kill the process.
+        Parameters:
+        cmd: string
+            The command to execute."""
         self.retcode = None
         self.outf = tempfile.NamedTemporaryFile(mode="w")
         self.errf = tempfile.NamedTemporaryFile(mode="w")
