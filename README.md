@@ -12,6 +12,7 @@ Useful for automating launching nodes/services/scripts from code in different ma
 or to boot up a robot with a set of software. (So you don't need to SSH into the robot for that!).
 
 **Note**: No security involved, it will execute any given command.
+
 **Note2**: You can launch one as root and use it for remote device reboots, for example 
 when a bluetooth card gets stuck. (I know this would be very NOT recommended, but it works).
 
