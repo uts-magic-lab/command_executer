@@ -10,7 +10,9 @@ from std_msgs.msg import String
 from command_executer.shell_cmd import ShellCmd
 
 
-def create_command(command, goal_idx, action_server_goal=None, start_time=None):
+def create_command(command, goal_idx,
+                   action_server_goal=None,
+                   start_time=None):
     """Create a dictionary representing the data of a command
     :param str command: The commandline command.
     :param ActionServerGoalHandle action_server_goal: The action server goal handle.
@@ -50,16 +52,26 @@ class CommandExecuter:
             check_commands_interval: float
                 Check commands status every given seconds. (Default 0.1s)
             publish_status_interval: float
-                Publish status of the commands every given seconds. (Default 0.5s)
+                Publish status of the commands every given seconds. (Default 1.0s)
             status_finished_commands_lifetime: float
                 How long to keep publishing an old finished command in the
-                status in seconds. (Default 120s)"""
+                status in seconds. (Default 120s)
+            status_stdout_max_characters: int
+                How many characters maximum you want published in the status
+                topic for the stdout field.
+            status_stderr_max_characters: int
+                How many characters maximum you want published
+                in the status topic for the stderr field."""
         self.check_commands_interval = rospy.get_param(
             "~check_commands_interval", 0.1)
         self.publish_status_interval = rospy.get_param(
-            "~publish_status_interval", 0.5)
+            "~publish_status_interval", 1.0)
         self.status_finished_commands_lifetime = rospy.get_param(
             "~status_finished_commands_lifetime", 120.0)
+        self.status_stdout_max_characters = rospy.get_param(
+            "~status_stdout_max_characters", 200)
+        self.status_stderr_max_characters = rospy.get_param(
+            "~status_stderr_max_characters", 200)
         rospy.loginfo(
             "Initializing CommandExecuter with name: " + str(rospy.get_name()))
         rospy.loginfo("Checking commands on interval (s): " +
@@ -142,7 +154,7 @@ class CommandExecuter:
         result = None
         # [:] creates a copy of the list
         for g in self.goals[:]:
-            if goal.goal.cmd_name == g.get('command_name'):
+            if goal.goal.goal.cmd_name == g.get('command_name'):
                 cmd = g.get('shell_command')
                 if cmd is None:
                     rospy.logwarn("We got a None shell command... fishy.")
@@ -169,6 +181,7 @@ class CommandExecuter:
         for g in self.goals[:]:
             goal = g.get('goal_handle')
             cmd = g.get('shell_command')
+            # Action server interface
             if goal is not None:
                 feedback = ExecuteCommandFeedback()
                 feedback.stdout = cmd.get_stdout()
@@ -191,15 +204,16 @@ class CommandExecuter:
                     g['finish_time'] = time.time()
                     g['command_duration'] = g.get(
                         'finish_time') - g.get('start_time')
+            # Topic interface
             else:
                 if cmd.is_done():
-                    rospy.loginfo(
-                        "Goal for {} is done. ".format(g.get('command')))
-                self.goals.remove(g)
-                self.old_goals.append(g)
-                g['finish_time'] = time.time()
-                g['command_duration'] = g.get(
-                    'finish_time') - g.get('start_time')
+                    rospy.loginfo("Goal for " + g.get('command_name') +
+                                  " is done. ")
+                    self.goals.remove(g)
+                    self.old_goals.append(g)
+                    g['finish_time'] = time.time()
+                    g['command_duration'] = g.get(
+                        'finish_time') - g.get('start_time')
 
     def pub_status(self, timer_event):
         ces = CommandExecuterStatus()
@@ -210,8 +224,8 @@ class CommandExecuter:
             cs.cmd_name = g.get('command_name')
             cs.cmd_description = g.get('command_description')
             cs.ret_val = -1
-            cs.stderr = cmd.get_stderr()
-            cs.stdout = cmd.get_stdout()
+            cs.stderr = cmd.get_stderr()[-self.status_stderr_max_characters:]
+            cs.stdout = cmd.get_stdout()[-self.status_stdout_max_characters:]
             cs.time_running = rospy.Duration(time.time() - g.get('start_time'))
             ces.active_cmds.append(cs)
 
@@ -222,8 +236,10 @@ class CommandExecuter:
             cs.cmd_name = g.get('command_name')
             cs.cmd_description = g.get('command_description')
             cs.ret_val = cmd.get_retcode()
-            cs.stderr = cmd.get_stderr()
-            cs.stdout = cmd.get_stdout()
+            if cs.ret_val is None:
+                continue
+            cs.stderr = cmd.get_stderr()[-self.status_stderr_max_characters:]
+            cs.stdout = cmd.get_stdout()[-self.status_stdout_max_characters:]
             cs.time_running = rospy.Duration(g.get('command_duration'))
             ces.finished_cmds.append(cs)
         self._status_pub.publish(ces)

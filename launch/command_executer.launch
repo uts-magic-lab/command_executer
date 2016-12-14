@@ -1,0 +1,17 @@
+<launch>
+    <node pkg="command_executer" name="main_computer" type="cmd_exec.py" output="screen">
+        <!-- Check commands status every given seconds -->
+        <param name="check_commands_interval" value="0.1" />
+        <!-- Publish status of the commands every given seconds -->
+        <param name="publish_status_interval" value="1.0" />
+        <!-- How long to keep publishing an old finished command in the
+             status in seconds -->
+        <param name="status_finished_commands_lifetime" value="120.0" />
+        <!-- How many characters maximum you want published in the status
+                topic for the stdout field. -->
+        <param name="status_stdout_max_characters" value="200" />
+        <!-- How many characters maximum you want published in the status
+                topic for the stderr field. -->
+        <param name="status_stderr_max_characters" value="200" />
+    </node>
+</launch>
