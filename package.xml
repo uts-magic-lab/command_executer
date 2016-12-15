@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>command_executer</name>
-  <version>0.0.0</version>
+  <version>0.0.1</version>
   <description>The command_executer package
     contains a node to run in every computer connected to a robot
     so you can execute commands in any of the machines.
