@@ -159,3 +159,22 @@ finished_cmds:
       nsecs: 540158987
 ```
 
+# Load a bunch of commands from yaml file
+You can load commands on batch by using the `commands_from_yaml.py` script with a YAML file
+containing a list of `command_executer/ExecuteCommandGoal`.
+
+For example:
+
+```
+rosrun command_executer commands_from_yaml.py /main_computer/command `rospack find command_executer`/config/initial_commands.yaml
+```
+
+Or in a launch file:
+
+```xml
+<launch>
+    <node pkg="command_executer" name="boot_commands" type="commands_from_yaml.py"
+        args="/main_computer/command $(find command_executer)/config/initial_commands.yaml"
+        output="screen"/>
+</launch>
+```

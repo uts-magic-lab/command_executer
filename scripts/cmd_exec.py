@@ -61,7 +61,10 @@ class CommandExecuter:
                 topic for the stdout field.
             status_stderr_max_characters: int
                 How many characters maximum you want published
-                in the status topic for the stderr field."""
+                in the status topic for the stderr field.
+            kill_already_existing_command: bool
+                When sending a goal with the same command name
+                wether to kill it or not to do anything."""
         self.check_commands_interval = rospy.get_param(
             "~check_commands_interval", 0.1)
         self.publish_status_interval = rospy.get_param(
@@ -72,6 +75,8 @@ class CommandExecuter:
             "~status_stdout_max_characters", 200)
         self.status_stderr_max_characters = rospy.get_param(
             "~status_stderr_max_characters", 200)
+        self.kill_already_existing_command = rospy.get_param(
+            "~kill_already_existing_command", True)
         rospy.loginfo(
             "Initializing CommandExecuter with name: " + str(rospy.get_name()))
         rospy.loginfo("Checking commands on interval (s): " +
@@ -80,6 +85,11 @@ class CommandExecuter:
                       str(self.publish_status_interval))
         rospy.loginfo("Finished commands lifetime (s): " +
                       str(self.status_finished_commands_lifetime))
+        k_str = "kill old command"
+        nk_str = "not execute new command"
+        rospy.loginfo("Policy on killing an already existing named command" +
+                      " is: " +
+                      k_str if self.kill_already_existing_command else nk_str)
         self.goal_idx = 0
         self.goals = []
         self.old_goals = []
@@ -122,8 +132,29 @@ class CommandExecuter:
             cmd = g.get('shell_command')
             cmd.kill()
 
+    def command_already_exists(self, new_command_name):
+        for g in self.goals:
+            if new_command_name == g.get('command_name'):
+                return True, self.kill_already_existing_command, g
+        return False, self.kill_already_existing_command, None
+
     def execute_cb(self, goal):
         goal.set_accepted()
+        exists, kill, prev_goal = self.command_already_exists(
+            goal.goal.goal.cmd_name)
+        if exists and kill:
+            rospy.logwarn("Command already existed, killing previous one " +
+                          " as per ~kill_already_existing_command param.")
+            prev_goal.get('shell_command').kill()
+        elif exists and not kill:
+            rospy.logwarn("Command " +
+                          " already existed, not doing anything as " +
+                          " per ~kill_already_existing_command param.")
+            result = ExecuteCommandResult()
+            result.ret_val = -1
+            result.stderr = "Command already exists, not running the same one."
+            goal.set_aborted(result)
+            return
         goal_dict = create_command(command=goal.goal.goal.cmd,
                                    goal_idx=self.goal_idx,
                                    action_server_goal=goal)

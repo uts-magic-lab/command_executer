@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="command_executer" name="boot_commands" type="commands_from_yaml.py"
+        args="/main_computer/command $(find command_executer)/config/initial_commands.yaml"
+        output="screen"/>
+</launch>
