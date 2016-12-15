@@ -35,6 +35,8 @@ Make a launch file and give the node a well thought name:
         <!-- How many characters maximum you want published in the status
                 topic for the stderr field. -->
         <param name="status_stderr_max_characters" value="200" />
+        <!-- If to kill a previous command when sending a new one with the same name -->
+        <param name="kill_already_existing_command" value="true" />
     </node>
 </launch>
 ```
