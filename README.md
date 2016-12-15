@@ -180,3 +180,24 @@ Or in a launch file:
         output="screen"/>
 </launch>
 ```
+
+The YAML file looks like:
+```yaml
+# YAML file containing action server goals in a list
+# for the command_executer node
+- cmd: 'rosrun topic_tools throttle messages /joint_states 5 /joint_states_throttled'
+  cmd_name: 'SW: Joint states throttled'
+  cmd_description: 'A republish inside of the robot of /joint_states topic so external computers can subscribe to it instead and not kill the wifi network'
+
+- cmd: 'sleep 60'
+  cmd_name: 'SW: Process that sleeps'
+  cmd_description: 'A sleeping process as example'
+
+- cmd: 'sleep 60'
+  cmd_name: 'HW: USB webcam driver'
+  cmd_description: 'Webcam driver example'
+
+- cmd: 'rostopic pub /activator std_msgs/Empty {} -r 1'
+  cmd_name: 'MISC: Activator publisher 1Hz'
+  cmd_description: 'Publishing every 1Hz on /activator for some task'
+```
