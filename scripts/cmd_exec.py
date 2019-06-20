@@ -214,10 +214,11 @@ class CommandExecuter:
             cmd = g.get('shell_command')
             # Action server interface
             if goal is not None:
-                feedback = ExecuteCommandFeedback()
-                feedback.stdout = cmd.get_stdout()
-                feedback.stderr = cmd.get_stderr()
-                goal.publish_feedback(feedback)
+                # Don't do any of this to save CPU for now...
+                # feedback = ExecuteCommandFeedback()
+                # feedback.stdout = cmd.get_stdout()
+                # feedback.stderr = cmd.get_stderr()
+                # goal.publish_feedback(feedback)
                 if cmd.is_done():
                     rospy.loginfo(
                         "Goal for {} is done. ".format(goal.goal.goal.cmd))
@@ -247,6 +248,9 @@ class CommandExecuter:
                         'finish_time') - g.get('start_time')
 
     def pub_status(self, timer_event):
+        # Don't do all this if no one is subscribed.
+        if self._status_pub.get_num_connections() < 1:
+            return
         ces = CommandExecuterStatus()
         for g in self.goals:
             cmd = g.get('shell_command')
