@@ -22,11 +22,11 @@ class ShellCmd:
         valid_chars = "-_.%s%s" % (string.ascii_letters, string.digits)
         filename_prefix = ''.join(c for c in cmd if c in valid_chars)
         self.outf = tempfile.NamedTemporaryFile(
-            mode="w", prefix=filename_prefix[:80])
+            mode="w", prefix=filename_prefix[:80] + "_STDOUT_")
         self.errf = tempfile.NamedTemporaryFile(
-            mode="w", prefix=filename_prefix[:80])
+            mode="w", prefix=filename_prefix[:80] + "_STDERR_")
         self.inf = tempfile.NamedTemporaryFile(
-            mode="r", prefix=filename_prefix[:80])
+            mode="r", prefix=filename_prefix[:80] + "_STDIN_")
         self.process = subprocess.Popen(cmd, shell=True, stdin=self.inf,
                                         stdout=self.outf, stderr=self.errf,
                                         preexec_fn=os.setsid, close_fds=True)
