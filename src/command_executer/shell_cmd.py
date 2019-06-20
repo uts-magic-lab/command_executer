@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import os
 import signal
+import string
 
 # This class is based in Victor Lopez (Github: v-lopez) implementation
 
@@ -18,9 +19,14 @@ class ShellCmd:
         cmd: string
             The command to execute."""
         self.retcode = None
-        self.outf = tempfile.NamedTemporaryFile(mode="w")
-        self.errf = tempfile.NamedTemporaryFile(mode="w")
-        self.inf = tempfile.NamedTemporaryFile(mode="r")
+        valid_chars = "-_.%s%s" % (string.ascii_letters, string.digits)
+        filename_prefix = ''.join(c for c in cmd if c in valid_chars)
+        self.outf = tempfile.NamedTemporaryFile(
+            mode="w", prefix=filename_prefix[:80])
+        self.errf = tempfile.NamedTemporaryFile(
+            mode="w", prefix=filename_prefix[:80])
+        self.inf = tempfile.NamedTemporaryFile(
+            mode="r", prefix=filename_prefix[:80])
         self.process = subprocess.Popen(cmd, shell=True, stdin=self.inf,
                                         stdout=self.outf, stderr=self.errf,
                                         preexec_fn=os.setsid, close_fds=True)
